@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zeig dich Mutig – Stark in Action</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="hero">
+  <h1>Zeig dich Mutig 🦁</h1>
+  <p class="subtitle">Dein Kind war mutig? Zeig es der Welt – und werde Teil unseres Buches!</p>
+</header>
+
+<main>
+
+  <section class="card intro">
+    <h2>Worum geht's?</h2>
+    <p>Ob auf den Baum geklettert, vom 3-Meter-Brett gesprungen, allein bei Freunden übernachtet oder bei einem Wettkampf mitgemacht – Kinder sind jeden Tag mutig, oft ohne dass wir Erwachsenen es überhaupt bemerken.</p>
+    <p><strong>Lade ein Bild und die Geschichte deines Kindes hoch.</strong> Die Community stimmt über die mutigsten Geschichten ab. Die 40 besten kommen ins Buch <strong>"Zeig dich Mutig"</strong> (erscheint Dezember 2026) – die 3 Kinder mit den meisten Stimmen bekommen ein Exemplar geschenkt.</p>
+  </section>
+
+  <section class="card" id="form-section">
+    <h2>Jetzt mitmachen</h2>
+    <form id="submission-form" novalidate>
+
+      <label for="child_name">Name des Kindes (Vorname reicht)</label>
+      <input type="text" id="child_name" name="child_name" required maxlength="80">
+
+      <label for="child_age">Alter</label>
+      <select id="child_age" name="child_age" required>
+        <option value="" disabled selected>Bitte wählen</option>
+        <!-- 5 bis 14 -->
+      </select>
+
+      <label for="story">Die mutige Geschichte</label>
+      <textarea id="story" name="story" required maxlength="1500" rows="5" placeholder="Was ist passiert? Warum war das mutig?"></textarea>
+
+      <label for="photo">Foto (max. 10 MB)</label>
+      <input type="file" id="photo" name="photo" accept="image/*" required>
+      <div id="photo-preview" class="photo-preview hidden"><img id="photo-preview-img" alt="Vorschau"></div>
+
+      <label for="parent_email">Deine E-Mail-Adresse (als Erziehungsberechtigte:r)</label>
+      <input type="email" id="parent_email" name="parent_email" required maxlength="200">
+
+      <details class="consent-details">
+        <summary>Einverständniserklärung lesen</summary>
+        <p>Mit dem Hochladen eines Bildes und einer Geschichte meines Kindes erkläre ich als Erziehungsberechtigte(r):</p>
+        <ul>
+          <li>Ich bin damit einverstanden, dass das eingereichte Bild sowie die Geschichte im Rahmen der Aktion "Zeig dich Mutig" von Stark in Action auf dieser Website veröffentlicht, zur Abstimmung gestellt und bei Auswahl unter den Top 40 im Buch "Zeig dich Mutig" abgedruckt werden.</li>
+          <li>Ich bestätige, dass ich die/der Erziehungsberechtigte des abgebildeten Kindes bin bzw. deren/dessen Einverständnis vorliegt.</li>
+          <li>Mir ist bekannt, dass die Teilnahme freiwillig ist und ich diese Einwilligung jederzeit mit Wirkung für die Zukunft per E-Mail an claas.altenhr@freenet.de widerrufen kann.</li>
+        </ul>
+      </details>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="consent" name="consent" required>
+        Ich habe die Einverständniserklärung gelesen und stimme zu.
+      </label>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="rules" name="rules" required>
+        Ich habe die <a href="#rules-section">Teilnahmebedingungen</a> gelesen und akzeptiere sie.
+      </label>
+
+      <button type="submit" id="submit-btn">Geschichte einreichen</button>
+      <p id="form-status" class="form-status" role="status"></p>
+    </form>
+  </section>
+
+  <section class="card" id="rules-section">
+    <h2>Teilnahmebedingungen</h2>
+    <ol>
+      <li><strong>Bild hochladen:</strong> Ein Foto, das dein Kind (5–14 Jahre) in einem mutigen Moment zeigt.</li>
+      <li><strong>Geschichte erzählen:</strong> Kurz beschreiben, was passiert ist und warum es mutig war.</li>
+      <li><strong>Einsendeschluss:</strong> 31. Oktober 2026</li>
+      <li><strong>Abstimmung:</strong> Im November stimmt die Community über die mutigsten Geschichten ab.</li>
+      <li><strong>Buch:</strong> Die 40 besten Geschichten & Bilder erscheinen im Buch "Zeig dich Mutig" (Dezember 2026).</li>
+      <li><strong>Gewinn:</strong> Die 3 Kinder mit den meisten Stimmen bekommen ein Exemplar des Buches geschenkt.</li>
+    </ol>
+    <p class="muted">Die Teilnahme ist kostenlos. Veranstalter: Stark in Action, Claas Altenähr, An der Leye 3, 58566 Kierspe.</p>
+  </section>
+
+</main>
+
+<footer>
+  <p>Stark in Action · <a href="https://www.stark-in-action.de">www.stark-in-action.de</a></p>
+</footer>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
