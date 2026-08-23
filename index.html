@@ -37,12 +37,18 @@
       <label for="story">Die mutige Geschichte</label>
       <textarea id="story" name="story" required maxlength="1500" rows="5" placeholder="Was ist passiert? Warum war das mutig?"></textarea>
 
-      <label for="photo">Foto (max. 10 MB)</label>
+      <label for="photo">Foto (wird beim Absenden automatisch verkleinert)</label>
       <input type="file" id="photo" name="photo" accept="image/*" required>
       <div id="photo-preview" class="photo-preview hidden"><img id="photo-preview-img" alt="Vorschau"></div>
 
       <label for="parent_email">Deine E-Mail-Adresse (als Erziehungsberechtigte:r)</label>
       <input type="email" id="parent_email" name="parent_email" required maxlength="200">
+
+      <!-- Honeypot gegen Spam-Bots: für Menschen unsichtbar, echte Nutzer lassen es leer -->
+      <div class="hp-field" aria-hidden="true">
+        <label for="website">Website</label>
+        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+      </div>
 
       <details class="consent-details">
         <summary>Einverständniserklärung lesen</summary>

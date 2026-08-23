@@ -1,6 +1,35 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_RAW_PHOTO_BYTES = 25 * 1024 * 1024; // Sanity-Limit fürs Original vor der Komprimierung
+const COMPRESS_MAX_DIMENSION = 1920; // px, längere Seite
+const COMPRESS_TARGET_BYTES = 1.5 * 1024 * 1024; // Zielgröße nach Komprimierung
+
+// Verkleinert & komprimiert ein Bild im Browser, bevor es hochgeladen wird —
+// aus einem 6-8 MB Handyfoto werden so realistisch 300-600 KB. Zusätzlich gibt
+// es ein serverseitiges Hard-Limit auf dem Storage-Bucket (siehe schema.sql),
+// das unabhängig davon greift, falls diese Client-Logik umgangen wird.
+async function compressImage(file) {
+  const bitmap = await createImageBitmap(file);
+  let { width, height } = bitmap;
+  if (width > COMPRESS_MAX_DIMENSION || height > COMPRESS_MAX_DIMENSION) {
+    const scale = COMPRESS_MAX_DIMENSION / Math.max(width, height);
+    width = Math.round(width * scale);
+    height = Math.round(height * scale);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
+
+  let quality = 0.82;
+  let blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+  while (blob && blob.size > COMPRESS_TARGET_BYTES && quality > 0.5) {
+    quality -= 0.12;
+    blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+  }
+  return blob || file;
+}
 
 let supabase = null;
 function getSupabase() {
@@ -50,6 +79,15 @@ form.addEventListener('submit', async (e) => {
   const consent = document.getElementById('consent').checked;
   const rules = document.getElementById('rules').checked;
   const file = photoInput.files[0];
+  const honeypot = document.getElementById('website').value;
+
+  if (honeypot) {
+    // Bot hat das unsichtbare Feld ausgefüllt — Einsendung still verwerfen,
+    // ohne dem Bot einen Fehler zu verraten.
+    form.reset();
+    setStatus('Danke! Deine Geschichte ist bei uns eingegangen. 🎉', 'success');
+    return;
+  }
 
   if (!childName || !childAge || !story || !parentEmail || !file) {
     setStatus('Bitte fülle alle Felder aus und wähle ein Foto.', 'error');
@@ -59,22 +97,23 @@ form.addEventListener('submit', async (e) => {
     setStatus('Bitte bestätige die Einverständniserklärung und die Teilnahmebedingungen.', 'error');
     return;
   }
-  if (file.size > MAX_PHOTO_BYTES) {
-    setStatus('Das Foto ist zu groß (max. 10 MB).', 'error');
+  if (file.size > MAX_RAW_PHOTO_BYTES) {
+    setStatus('Das Foto ist zu groß (max. 25 MB).', 'error');
     return;
   }
 
   submitBtn.disabled = true;
-  setStatus('Wird hochgeladen …', '');
+  setStatus('Foto wird verkleinert …', '');
 
   try {
     const supabase = getSupabase();
-    const ext = file.name.split('.').pop().toLowerCase();
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const compressed = await compressImage(file);
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
 
+    setStatus('Wird hochgeladen …', '');
     const { error: uploadError } = await supabase.storage
       .from('photos')
-      .upload(fileName, file, { cacheControl: '3600', upsert: false });
+      .upload(fileName, compressed, { cacheControl: '3600', upsert: false, contentType: 'image/jpeg' });
 
     if (uploadError) throw uploadError;
 

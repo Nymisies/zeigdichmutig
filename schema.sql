@@ -28,9 +28,15 @@ create policy "Öffentliches Einreichen erlauben"
 -- nur für Claas im Supabase-Dashboard sichtbar, bis eine Voting-Phase
 -- mit eigener öffentlicher Ansicht (ohne E-Mail) gebaut wird.
 
--- Storage-Bucket "photos" muss im Dashboard unter Storage manuell angelegt werden
--- (Public Bucket = an), danach folgende Policy für öffentliches Hochladen:
--- create policy "Öffentlicher Foto-Upload"
---   on storage.objects for insert
---   to anon
---   with check (bucket_id = 'photos');
+-- Storage-Bucket "photos" mit Hard-Limit anlegen (serverseitig, greift auch wenn
+-- die Komprimierung im Browser umgangen wird): 5 MB max., nur Bilddateien.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('photos', 'photos', true, 5242880, array['image/jpeg', 'image/png', 'image/webp', 'image/heic'])
+on conflict (id) do update
+  set file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+create policy "Öffentlicher Foto-Upload"
+  on storage.objects for insert
+  to anon
+  with check (bucket_id = 'photos');

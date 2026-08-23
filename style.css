@@ -104,6 +104,8 @@ button#submit-btn:disabled { background: var(--muted); cursor: not-allowed; }
 .form-status.error { color: #d1332a; }
 .form-status.success { color: var(--teal); font-weight: 600; }
 
+.hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
 ol { margin-left: 20px; }
 ol li { margin-bottom: 8px; }
 
