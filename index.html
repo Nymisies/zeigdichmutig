@@ -9,14 +9,50 @@
 <body>
 
 <header class="hero">
-  <h1>Zeig dich Mutig 🦁</h1>
+  <img src="logo.png" alt="Stark in Action Logo" class="hero-logo">
+  <h1>Zeig dich Mutig</h1>
   <p class="subtitle">Dein Kind war mutig? Zeig es der Welt – und werde Teil unseres Buches!</p>
 </header>
 
 <main>
 
+  <section class="card why">
+    <h2>Warum "Zeig dich Mutig"?</h2>
+    <p class="lead">Kinder dürfen mutig sein. Sie müssen es sogar – denn nur wer sich traut, wächst daran.</p>
+    <div class="why-grid">
+      <div class="why-item">
+        <h3>Mut macht stark</h3>
+        <p>Selbstvertrauen entsteht nicht durch Zureden, sondern durch echte Erfahrungen: "Das habe ich geschafft." Jede kleine mutige Tat ist ein Baustein für ein starkes Selbstbild.</p>
+      </div>
+      <div class="why-item">
+        <h3>Risiken einschätzen lernt man nur durch Übung</h3>
+        <p>Kinder, die nie selbst entscheiden dürfen, wie weit sie gehen, können auch nie lernen, wann es zu weit ist. Risikokompetenz entwickelt sich nur im echten Ausprobieren – mit ein paar blauen Flecken inklusive.</p>
+      </div>
+      <div class="why-item">
+        <h3>Der Blick der Erwachsenen zählt</h3>
+        <p>Oft übersehen wir, wie mutig Kinder jeden Tag sind. Wenn wir hinschauen, benennen und feiern, was sie sich getraut haben, spüren sie: Mein Mut wird gesehen. Genau das wollen wir mit dieser Aktion tun.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card example">
+    <h2>Ein Beispiel</h2>
+    <p class="muted">Damit du siehst, worum es geht – die Geschichte von Feline:</p>
+    <div class="example-card">
+      <div class="example-photo">
+        <img src="beispiel-feline.jpg" alt="Feline auf ihrem Fahrrad">
+      </div>
+      <div class="example-text">
+        <p class="example-name">Feline, 8 Jahre</p>
+        <p>Feline hat eine Freundin, die ungefähr 6 Kilometer entfernt wohnt – mit dem Fahrrad etwa 15 Minuten. Der direkte Weg führt mitten durch einen Wald und über verlassene Wiesen, ohne Häuser in der Nähe. Die Alternative wäre fast 15 Kilometer an der Hauptstraße entlang.</p>
+        <p>Auf diesem Bild fährt sie die Strecke zum ersten Mal ganz allein – wahrscheinlich mutiger dabei als ihre Eltern. Sie war nervös und aufgeregt, aber danach unglaublich stolz und zufrieden auf ihren Mut.</p>
+        <p>Das hat sie auf jeden Fall stärker gemacht.</p>
+      </div>
+    </div>
+  </section>
+
   <section class="card intro">
-    <h2>Worum geht's?</h2>
+    <h2>Wie es funktioniert</h2>
     <p>Ob auf den Baum geklettert, vom 3-Meter-Brett gesprungen, allein bei Freunden übernachtet oder bei einem Wettkampf mitgemacht – Kinder sind jeden Tag mutig, oft ohne dass wir Erwachsenen es überhaupt bemerken.</p>
     <p><strong>Lade ein Bild und die Geschichte deines Kindes hoch.</strong> Die Community stimmt über die mutigsten Geschichten ab. Die 40 besten kommen ins Buch <strong>"Zeig dich Mutig"</strong> (erscheint Dezember 2026) – die 3 Kinder mit den meisten Stimmen bekommen ein Exemplar geschenkt.</p>
   </section>
@@ -35,7 +71,8 @@
       </select>
 
       <label for="story">Die mutige Geschichte</label>
-      <textarea id="story" name="story" required maxlength="1500" rows="5" placeholder="Was ist passiert? Warum war das mutig?"></textarea>
+      <textarea id="story" name="story" required maxlength="1000" rows="6" placeholder="Was ist passiert? Warum war das mutig?"></textarea>
+      <div class="char-counter"><span id="story-count">0</span> / 1000 Zeichen</div>
 
       <label for="photo">Foto (wird beim Absenden automatisch verkleinert)</label>
       <input type="file" id="photo" name="photo" accept="image/*" required>
@@ -79,7 +116,7 @@
     <h2>Teilnahmebedingungen</h2>
     <ol>
       <li><strong>Bild hochladen:</strong> Ein Foto, das dein Kind (5–14 Jahre) in einem mutigen Moment zeigt.</li>
-      <li><strong>Geschichte erzählen:</strong> Kurz beschreiben, was passiert ist und warum es mutig war.</li>
+      <li><strong>Geschichte erzählen:</strong> Kurz beschreiben, was passiert ist und warum es mutig war (bis zu 1000 Zeichen).</li>
       <li><strong>Einsendeschluss:</strong> 31. Oktober 2026</li>
       <li><strong>Abstimmung:</strong> Im November stimmt die Community über die mutigsten Geschichten ab.</li>
       <li><strong>Buch:</strong> Die 40 besten Geschichten & Bilder erscheinen im Buch "Zeig dich Mutig" (Dezember 2026).</li>
@@ -91,6 +128,7 @@
 </main>
 
 <footer>
+  <img src="logo.png" alt="Stark in Action Logo" class="footer-logo">
   <p>Stark in Action · <a href="https://www.stark-in-action.de">www.stark-in-action.de</a></p>
 </footer>
 

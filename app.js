@@ -48,6 +48,18 @@ for (let age = 5; age <= 14; age++) {
   ageSelect.appendChild(opt);
 }
 
+// Live-Zeichenzähler für die Geschichte
+const storyInput = document.getElementById('story');
+const storyCount = document.getElementById('story-count');
+const charCounter = document.querySelector('.char-counter');
+const STORY_MAX = parseInt(storyInput.getAttribute('maxlength'), 10);
+storyInput.addEventListener('input', () => {
+  const len = storyInput.value.length;
+  storyCount.textContent = len;
+  charCounter.classList.toggle('limit-near', len >= STORY_MAX * 0.9 && len < STORY_MAX);
+  charCounter.classList.toggle('limit-reached', len >= STORY_MAX);
+});
+
 // Foto-Vorschau
 const photoInput = document.getElementById('photo');
 const preview = document.getElementById('photo-preview');
@@ -85,7 +97,7 @@ form.addEventListener('submit', async (e) => {
     // Bot hat das unsichtbare Feld ausgefüllt — Einsendung still verwerfen,
     // ohne dem Bot einen Fehler zu verraten.
     form.reset();
-    setStatus('Danke! Deine Geschichte ist bei uns eingegangen. 🎉', 'success');
+    setStatus('Danke! Deine Geschichte ist bei uns eingegangen.', 'success');
     return;
   }
 
@@ -132,7 +144,7 @@ form.addEventListener('submit', async (e) => {
 
     form.reset();
     preview.classList.add('hidden');
-    setStatus('Danke! Deine Geschichte ist bei uns eingegangen. 🎉', 'success');
+    setStatus('Danke! Deine Geschichte ist bei uns eingegangen.', 'success');
   } catch (err) {
     console.error(err);
     setStatus('Da ist etwas schiefgelaufen. Bitte versuch es später noch einmal.', 'error');
