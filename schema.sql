@@ -40,3 +40,19 @@ create policy "Öffentlicher Foto-Upload"
   on storage.objects for insert
   to anon
   with check (bucket_id = 'photos');
+
+-- Privater Bucket "originals": Zwischenlager für die unkomprimierten
+-- Originalfotos (Druckqualität fürs Buch). NICHT public. Nur "insert" für
+-- anon (Upload beim Absenden), kein "select" — nur die Netlify-Funktion
+-- mit dem service_role Key kann sie lesen und nach dem Mailversand wieder
+-- löschen. So bleibt dauerhaft nur Speicher für die kleinen Web-Fotos belegt.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('originals', 'originals', false, 26214400, array['image/jpeg', 'image/png', 'image/webp', 'image/heic'])
+on conflict (id) do update
+  set file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+create policy "Original-Upload (privat)"
+  on storage.objects for insert
+  to anon
+  with check (bucket_id = 'originals');

@@ -1,8 +1,8 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
 const MAX_RAW_PHOTO_BYTES = 25 * 1024 * 1024; // Sanity-Limit fürs Original vor der Komprimierung
-const COMPRESS_MAX_DIMENSION = 1920; // px, längere Seite
-const COMPRESS_TARGET_BYTES = 1.5 * 1024 * 1024; // Zielgröße nach Komprimierung
+const COMPRESS_MAX_DIMENSION = 2200; // px, längere Seite — für die Web-Ansicht/Abstimmung, nicht für Druck
+const COMPRESS_TARGET_BYTES = 2 * 1024 * 1024; // Zielgröße nach Komprimierung
 
 // Verkleinert & komprimiert ein Bild im Browser, bevor es hochgeladen wird —
 // aus einem 6-8 MB Handyfoto werden so realistisch 300-600 KB. Zusätzlich gibt
@@ -22,13 +22,42 @@ async function compressImage(file) {
   canvas.height = height;
   canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
 
-  let quality = 0.82;
+  let quality = 0.85;
   let blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
-  while (blob && blob.size > COMPRESS_TARGET_BYTES && quality > 0.5) {
-    quality -= 0.12;
+  while (blob && blob.size > COMPRESS_TARGET_BYTES && quality > 0.65) {
+    quality -= 0.08;
     blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
   }
   return blob || file;
+}
+
+// Lädt das unkomprimierte Original in den privaten "originals"-Bucket hoch und
+// stößt im Hintergrund die Netlify-Funktion an, die es per Mail an Claas schickt
+// und danach wieder löscht. Bewusst ohne await im Aufrufer — ein Fehler hier darf
+// die bereits erfolgreiche Einreichung (Foto + Datensatz) nicht rückgängig machen.
+async function archiveOriginal(originalFile, baseFileName, meta) {
+  try {
+    const supabase = getSupabase();
+    const originalPath = `orig-${baseFileName}`;
+    const { error: origUploadError } = await supabase.storage
+      .from('originals')
+      .upload(originalPath, originalFile, { cacheControl: '3600', upsert: false });
+    if (origUploadError) throw origUploadError;
+
+    await fetch('/.netlify/functions/notify-submission', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: originalPath,
+        child_name: meta.childName,
+        child_age: meta.childAge,
+        story: meta.story,
+        parent_email: meta.parentEmail
+      })
+    });
+  } catch (err) {
+    console.error('Original-Archivierung fehlgeschlagen (Einreichung selbst ist trotzdem gültig):', err);
+  }
 }
 
 let supabase = null;
@@ -145,6 +174,10 @@ form.addEventListener('submit', async (e) => {
     form.reset();
     preview.classList.add('hidden');
     setStatus('Danke! Deine Geschichte ist bei uns eingegangen.', 'success');
+
+    // Original in Druckqualität separat archivieren (best-effort, blockiert die
+    // erfolgreiche Einreichung oben nicht — die steht schon sicher in der DB).
+    archiveOriginal(file, fileName, { childName, childAge, story, parentEmail });
   } catch (err) {
     console.error(err);
     setStatus('Da ist etwas schiefgelaufen. Bitte versuch es später noch einmal.', 'error');
