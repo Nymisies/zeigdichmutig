@@ -1,17 +1,18 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #f7fbfa;
+  --bg: #eeece8;
   --card: #ffffff;
-  --card-border: #e2f0ec;
-  --mint: #a9f3c9;
-  --mid: #5ec4e1;
-  --blue: #0c90fb;
-  --blue-dark: #086fc4;
-  --ink: #12181b;
+  --card-border: #e2ded4;
+  --navy: #025fad;
+  --navy-dark: #01467f;
+  --olive: #a9c139;
+  --olive-dark: #86a02a;
+  --ink: #14171a;
   --muted: #6b7c85;
   --radius: 18px;
-  --shadow: 0 4px 18px rgba(12, 40, 50, 0.08);
+  --shadow: 0 4px 18px rgba(20, 23, 26, 0.08);
+  --font-display: 'Anton', 'Segoe UI', system-ui, sans-serif;
 }
 
 body {
@@ -21,17 +22,51 @@ body {
   line-height: 1.55;
 }
 
+.ink { color: var(--ink); }
+.accent { color: var(--navy); }
+
 .hero {
-  background: linear-gradient(160deg, var(--mint), var(--mid) 55%, var(--blue));
-  color: #fff;
-  padding: 36px 20px 34px;
+  background: var(--bg);
+  padding: 40px 20px 0;
   text-align: center;
 }
-.hero-logo { width: 84px; height: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25)); }
-.hero h1 { font-size: 32px; margin-bottom: 8px; text-shadow: 0 1px 4px rgba(0,0,0,0.15); }
-.hero .subtitle { font-size: 16px; opacity: 0.97; max-width: 520px; margin: 0 auto; }
+.hero-logo { width: 84px; height: auto; margin-bottom: 14px; }
+.hero-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: 0.5px;
+}
+.hero-title .accent { display: block; font-size: 1.15em; }
+.hero-banner {
+  display: inline-block;
+  background: var(--olive);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  margin: 18px 0 0;
+  transform: rotate(-1deg);
+}
 
-main { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
+main { max-width: 640px; margin: 0 auto; padding: 24px 16px 60px; }
+
+/* FEATURE-STREIFEN (3 Bullets wie Flyer-Vorderseite) */
+.feature-strip { display: flex; flex-direction: column; gap: 18px; margin-bottom: 20px; }
+.feature { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+.feature p { font-weight: 700; font-size: 14px; max-width: 220px; margin: 0; color: var(--ink); }
+
+.badge {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.badge svg { width: 26px; height: 26px; }
+.badge-olive { background: var(--olive); color: #fff; }
+.badge-blue { background: var(--navy); color: #fff; }
 
 .card {
   background: var(--card);
@@ -42,36 +77,50 @@ main { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
   margin-bottom: 20px;
 }
 
-h2 { font-size: 21px; margin-bottom: 12px; color: var(--ink); }
-h2::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); margin-right: 8px; vertical-align: middle; }
+h2 { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; letter-spacing: 0.3px; font-size: 24px; margin-bottom: 14px; color: var(--ink); }
 p { margin-bottom: 10px; }
 .muted { color: var(--muted); font-size: 13px; }
-.lead { font-size: 16px; font-weight: 600; color: var(--blue-dark); margin-bottom: 18px; }
+.lead { font-size: 16px; font-weight: 600; color: var(--navy); margin-bottom: 18px; }
 
 /* WARUM-SEKTION */
 .why-grid { display: flex; flex-direction: column; gap: 16px; }
-.why-item { background: linear-gradient(180deg, #f2fbf7, #eef8fd); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px 18px; }
+.why-item { background: #f8f7f3; border: 1px solid var(--card-border); border-radius: 14px; padding: 16px 18px; }
 .why-item h3 { font-size: 16px; margin-bottom: 6px; color: var(--ink); }
 .why-item p { font-size: 14px; color: var(--muted); margin-bottom: 0; }
 
 /* BEISPIEL */
 .example-card { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
 .example-photo img { width: 100%; max-height: 320px; object-fit: cover; border-radius: 14px; display: block; }
-.example-name { font-weight: 700; color: var(--blue-dark); font-size: 15px; }
+.example-name { font-weight: 700; color: var(--navy); font-size: 15px; }
 .example-text p { font-size: 14px; }
 
 .card.featured {
   border: 2px solid transparent;
   background:
     linear-gradient(var(--card), var(--card)) padding-box,
-    linear-gradient(135deg, var(--mint), var(--blue)) border-box;
-  box-shadow: 0 8px 28px rgba(12, 90, 130, 0.12);
+    linear-gradient(135deg, var(--olive), var(--navy)) border-box;
+  box-shadow: 0 8px 28px rgba(2, 60, 90, 0.12);
 }
+
+/* ICON-LISTE (Flyer-Rückseite) */
+.icon-list { display: flex; flex-direction: column; gap: 18px; margin: 16px 0 8px; }
+.icon-list-item { display: flex; gap: 14px; align-items: flex-start; }
+.icon-list-item .badge { width: 44px; height: 44px; }
+.icon-list-item .badge svg { width: 22px; height: 22px; }
+.icon-list-item h3 { font-size: 16px; margin-bottom: 4px; }
+.icon-list-item p { font-size: 14px; color: var(--muted); margin-bottom: 0; }
+.term-list { list-style: none; font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 3px; }
+.term-list strong { color: var(--ink); }
 
 /* BUCH-VORSCHAU */
 .book-mockup { margin-top: 18px; border-radius: 14px; overflow: hidden; border: 1px solid var(--card-border); }
 .book-mockup img { width: 100%; display: block; }
 .book-caption { text-align: center; padding: 10px 12px 4px; margin-bottom: 0; }
+
+/* CTA-BANNER */
+.cta-banner { text-align: center; padding: 12px 0 28px; }
+.cta-line { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; font-size: 22px; letter-spacing: 0.3px; margin-bottom: 6px; }
+.cta-script { font-family: 'Segoe Script', cursive; font-style: italic; color: var(--navy); font-size: 17px; margin: 0; }
 
 form { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
 
@@ -84,13 +133,13 @@ input[type="text"], input[type="email"], input[type="number"], select, textarea 
   border-radius: 12px;
   font-size: 15px;
   font-family: inherit;
-  background: #fbfffe;
+  background: #fdfcfa;
   color: var(--ink);
 }
 textarea { resize: vertical; }
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: var(--blue);
+  border-color: var(--navy);
 }
 
 .char-counter { text-align: right; font-size: 12px; color: var(--muted); margin-top: -10px; }
@@ -112,18 +161,18 @@ input[type="file"] { font-size: 14px; }
   font-size: 14px;
   margin-bottom: 0;
 }
-.checkbox-label input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px; accent-color: var(--blue); }
-.checkbox-label a { color: var(--blue-dark); }
+.checkbox-label input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px; accent-color: var(--navy); }
+.checkbox-label a { color: var(--navy); }
 
 .consent-details { border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 14px; font-size: 13px; }
-.consent-details summary { cursor: pointer; font-weight: 600; color: var(--blue-dark); }
+.consent-details summary { cursor: pointer; font-weight: 600; color: var(--navy); }
 .consent-details ul { margin: 10px 0 0 18px; }
 .consent-details li { margin-bottom: 6px; }
 
 .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
 button#submit-btn {
-  background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+  background: var(--navy);
   color: #fff;
   border: none;
   border-radius: 14px;
@@ -131,50 +180,49 @@ button#submit-btn {
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  transition: filter 0.15s;
+  transition: background 0.15s;
 }
-button#submit-btn:hover { filter: brightness(1.08); }
+button#submit-btn:hover { background: var(--navy-dark); }
 button#submit-btn:disabled { background: var(--muted); cursor: not-allowed; }
 
 .form-status { font-size: 14px; min-height: 20px; }
 .form-status.error { color: #d1332a; }
-.form-status.success { color: #0a9a6e; font-weight: 600; }
+.form-status.success { color: var(--olive-dark); font-weight: 600; }
 
 ol { margin-left: 20px; }
 ol li { margin-bottom: 8px; }
 
 footer { text-align: center; padding: 28px 24px; color: var(--muted); font-size: 13px; }
 .footer-logo { width: 44px; height: auto; margin-bottom: 8px; opacity: 0.85; }
-footer a { color: var(--blue-dark); }
+footer a { color: var(--navy); }
 
 @media (min-width: 560px) {
   .example-card { flex-direction: row; align-items: stretch; }
   .example-photo { flex: 0 0 42%; }
   .example-photo img { height: 100%; }
   .example-text { flex: 1; }
+
+  .feature-strip { flex-direction: row; }
+  .feature { flex: 1; }
 }
 
 @media (max-width: 480px) {
-  .hero h1 { font-size: 26px; }
+  .hero-title { font-size: 36px; }
 }
 
-/* ============ DESKTOP: breiteres, gefälligeres Layout ab 900px ============
-   Angelehnt an stark-in-action.de: ~1140px Inhaltsbreite, deutlich größere
-   Überschriften. Mobile-Ansicht bleibt bewusst unverändert. */
+/* ============ DESKTOP: breiteres, gefälligeres Layout ab 900px ============ */
 @media (min-width: 900px) {
-  .hero { padding: 56px 20px 52px; }
+  .hero { padding: 60px 20px 0; }
   .hero-logo { width: 110px; }
-  .hero h1 { font-size: clamp(40px, 5vw, 56px); }
-  .hero .subtitle { font-size: 20px; max-width: 680px; }
+  .hero-title { font-size: clamp(48px, 6vw, 76px); }
+  .hero-banner { font-size: 17px; padding: 10px 28px; }
 
-  main { max-width: 1140px; padding: 40px 24px 80px; }
+  main { max-width: 1140px; padding: 44px 24px 80px; }
 
   .card { padding: 40px 44px; margin-bottom: 28px; }
-  h2 { font-size: 30px; margin-bottom: 18px; }
-  h2::before { width: 10px; height: 10px; margin-right: 12px; }
+  h2 { font-size: 34px; margin-bottom: 20px; }
   .lead { font-size: 19px; }
   .why .lead, .example > p.muted, .intro > p { font-size: 17px; }
-  .intro p { font-size: 17px; }
 
   .why-grid { flex-direction: row; gap: 22px; }
   .why-item { flex: 1; padding: 22px 24px; }
@@ -187,7 +235,19 @@ footer a { color: var(--blue-dark); }
   .example-name { font-size: 18px; }
   .example-text p { font-size: 16px; }
 
+  .icon-list-item .badge { width: 56px; height: 56px; }
+  .icon-list-item .badge svg { width: 28px; height: 28px; }
+  .icon-list-item h3 { font-size: 19px; }
+  .icon-list-item p, .term-list { font-size: 15px; }
+
+  .cta-line { font-size: 32px; }
+  .cta-script { font-size: 20px; }
+
+  .feature p { font-size: 16px; max-width: 260px; }
+  .badge { width: 60px; height: 60px; }
+  .badge svg { width: 30px; height: 30px; }
+
   #form-section form, #rules-section > *:not(h2) { max-width: 640px; }
 
-  ol li, .rules-section p { font-size: 16px; }
+  ol li { font-size: 16px; }
 }
