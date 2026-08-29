@@ -31,6 +31,8 @@ body {
   text-align: center;
 }
 .hero-logo { width: 84px; height: auto; margin-bottom: 14px; }
+.legal-hero { padding-bottom: 30px; }
+.legal-hero .hero-title { font-size: clamp(26px, 8vw, 32px) !important; padding: 0 10px; word-break: break-word; hyphens: auto; }
 .hero-title {
   font-family: var(--font-display);
   font-weight: 400;
