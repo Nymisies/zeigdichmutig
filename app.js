@@ -181,12 +181,15 @@ form.addEventListener('submit', async (e) => {
 
     if (wantsFreebie) {
       freebieReveal.classList.remove('hidden');
-      fetch('/.netlify/functions/send-freebie', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ parent_email: parentEmail, child_name: childName })
-      }).catch(err => console.error('Freebie-Mail fehlgeschlagen:', err));
     }
+
+    // Bestätigungsmail an die Eltern — geht IMMER raus (nicht nur bei Freebie-Wunsch),
+    // mit Hinweis auf die Abstimmung ab 1. November + Teilen-Aufruf.
+    fetch('/.netlify/functions/send-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parent_email: parentEmail, child_name: childName, wants_freebie: wantsFreebie })
+    }).catch(err => console.error('Bestätigungsmail fehlgeschlagen:', err));
 
     // Original in Druckqualität separat archivieren (best-effort, blockiert die
     // erfolgreiche Einreichung oben nicht — die steht schon sicher in der DB).
