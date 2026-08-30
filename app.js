@@ -103,6 +103,7 @@ photoInput.addEventListener('change', () => {
 const form = document.getElementById('submission-form');
 const submitBtn = document.getElementById('submit-btn');
 const statusEl = document.getElementById('form-status');
+const freebieReveal = document.getElementById('freebie-reveal');
 
 function setStatus(message, type) {
   statusEl.textContent = message;
@@ -112,6 +113,7 @@ function setStatus(message, type) {
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   setStatus('', '');
+  freebieReveal.classList.add('hidden');
 
   const childName = document.getElementById('child_name').value.trim();
   const childAge = parseInt(document.getElementById('child_age').value, 10);
@@ -119,6 +121,7 @@ form.addEventListener('submit', async (e) => {
   const parentEmail = document.getElementById('parent_email').value.trim();
   const consent = document.getElementById('consent').checked;
   const rules = document.getElementById('rules').checked;
+  const wantsFreebie = document.getElementById('wants_freebie').checked;
   const file = photoInput.files[0];
   const honeypot = document.getElementById('website').value;
 
@@ -166,7 +169,8 @@ form.addEventListener('submit', async (e) => {
       story: story,
       image_path: publicUrlData.publicUrl,
       parent_email: parentEmail,
-      consent: true
+      consent: true,
+      wants_freebie: wantsFreebie
     });
 
     if (insertError) throw insertError;
@@ -174,6 +178,15 @@ form.addEventListener('submit', async (e) => {
     form.reset();
     preview.classList.add('hidden');
     setStatus('Danke! Deine Geschichte ist bei uns eingegangen.', 'success');
+
+    if (wantsFreebie) {
+      freebieReveal.classList.remove('hidden');
+      fetch('/.netlify/functions/send-freebie', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parent_email: parentEmail, child_name: childName })
+      }).catch(err => console.error('Freebie-Mail fehlgeschlagen:', err));
+    }
 
     // Original in Druckqualität separat archivieren (best-effort, blockiert die
     // erfolgreiche Einreichung oben nicht — die steht schon sicher in der DB).

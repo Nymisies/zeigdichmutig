@@ -13,6 +13,7 @@ create table submissions (
   consent boolean not null default false,
   status text not null default 'pending', -- pending | approved | rejected (für spätere Moderation/Voting)
   votes int not null default 0,           -- für spätere Abstimmungsphase
+  wants_freebie boolean not null default false, -- Dankeschön-Kurs "Kleine Helden" gewünscht
   created_at timestamptz not null default now()
 );
 
