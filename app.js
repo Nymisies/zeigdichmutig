@@ -68,9 +68,9 @@ function getSupabase() {
   return supabase;
 }
 
-// Altersauswahl 5-14 befüllen
+// Altersauswahl 5-16 befüllen
 const ageSelect = document.getElementById('child_age');
-for (let age = 5; age <= 14; age++) {
+for (let age = 5; age <= 16; age++) {
   const opt = document.createElement('option');
   opt.value = age;
   opt.textContent = `${age} Jahre`;

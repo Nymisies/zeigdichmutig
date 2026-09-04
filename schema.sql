@@ -6,7 +6,7 @@ create extension if not exists pgcrypto;
 create table submissions (
   id uuid primary key default gen_random_uuid(),
   child_name text not null,
-  child_age int not null check (child_age between 5 and 14),
+  child_age int not null check (child_age between 5 and 16),
   story text not null,
   image_path text not null,
   parent_email text not null,
