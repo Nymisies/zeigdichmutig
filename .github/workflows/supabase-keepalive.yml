@@ -3,6 +3,17 @@ name: Supabase Keepalive
 # Pingt die Supabase-Datenbank regelmäßig an, damit das Free-Tier-Projekt nicht
 # nach 7 Tagen Inaktivität automatisch pausiert wird. Läuft server-seitig auf
 # GitHub, unabhängig davon, ob irgendein Rechner an ist.
+#
+# WICHTIG: Eine reine Lese-Abfrage zählt bei Supabase NICHT als "Aktivität"
+# (am 22.09.2026 per Inaktivitäts-Warnung bestätigt, obwohl der alte Read-Ping
+# erfolgreich lief). Deshalb hier ein echter Schreibzugriff (Insert) in die
+# eigens dafür angelegte Tabelle "keepalive_ping" — dafür ist der service_role
+# Key nötig (umgeht RLS), NIEMALS der öffentliche anon-Key würde reichen, weil
+# anon keine Schreibrechte auf diese Tabelle hat.
+#
+# Secret "SUPABASE_SERVICE_ROLE_KEY" muss unter Settings → Secrets and
+# variables → Actions im Repo hinterlegt sein (Repo ist public — der Key darf
+# NIEMALS im Klartext hier im Workflow stehen).
 
 on:
   schedule:
@@ -13,9 +24,18 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Supabase anpingen
+      - name: Supabase mit echtem Schreibzugriff anpingen
+        env:
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          curl -sf "https://fefpwimrvgfxyfgwltow.supabase.co/rest/v1/submissions?select=id&limit=1" \
-            -H "apikey: sb_publishable_2X0J8luOKzZfzE5HMYr6tw_d0mTh895" \
-            -H "Authorization: Bearer sb_publishable_2X0J8luOKzZfzE5HMYr6tw_d0mTh895" \
-            -o /dev/null -w "Supabase-Ping: HTTP %{http_code}\n"
+          if [ -z "$SERVICE_KEY" ]; then
+            echo "::error::Secret SUPABASE_SERVICE_ROLE_KEY fehlt — siehe Kommentar oben in dieser Datei."
+            exit 1
+          fi
+          curl -sf -X POST "https://fefpwimrvgfxyfgwltow.supabase.co/rest/v1/keepalive_ping" \
+            -H "apikey: $SERVICE_KEY" \
+            -H "Authorization: Bearer $SERVICE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d '{}' \
+            -o /dev/null -w "Supabase-Keepalive-Insert: HTTP %{http_code}\n"

@@ -57,3 +57,14 @@ create policy "Original-Upload (privat)"
   on storage.objects for insert
   to anon
   with check (bucket_id = 'originals');
+
+-- Heartbeat-Tabelle für den GitHub-Actions-Keepalive: eine simple Lese-Abfrage
+-- zählt bei Supabase NICHT als "Aktivität" gegen die 7-Tage-Pause im Free-Tier
+-- (per E-Mail-Warnung am 22.09. bestätigt, obwohl der Ping erfolgreich lief).
+-- Ein echter Schreibzugriff (Insert) hier zählt zuverlässig. Kein Grant für
+-- anon/authenticated — nur der service_role Key (im GitHub-Secret) kann hier
+-- schreiben, die Zeilen sind rein technisch und für niemand sonst sichtbar.
+create table if not exists keepalive_ping (
+  id bigint generated always as identity primary key,
+  pinged_at timestamptz not null default now()
+);
