@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin – Zeig dich Mutig</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .admin-wrap { max-width: 900px; }
+  .admin-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .admin-toolbar select { padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--card-border); }
+  .admin-row { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--card-border); }
+  .admin-row:last-child { border-bottom: none; }
+  .admin-thumb { width: 90px; height: 90px; object-fit: cover; border-radius: 10px; flex-shrink: 0; background: var(--bg); }
+  .admin-info { flex: 1; min-width: 0; }
+  .admin-info .name { font-weight: 700; color: var(--navy); }
+  .admin-info .meta { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .admin-info .story { font-size: 13px; margin-bottom: 6px; white-space: pre-wrap; }
+  .admin-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
+  .admin-badge.pending { background: #fff3cd; color: #8a6500; }
+  .admin-badge.approved { background: #d9f2e3; color: var(--olive-dark); }
+  .admin-badge.rejected { background: #fbdede; color: #a11; }
+  .admin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .admin-actions button {
+    border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .btn-approve { background: var(--olive); color: #fff; }
+  .btn-reject { background: #d1332a; color: #fff; }
+  .btn-pending { background: var(--muted); color: #fff; }
+  .btn-delete { background: transparent; color: #d1332a; border: 1.5px solid #d1332a !important; }
+  #login-box input { padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--card-border); margin-right: 8px; }
+  #login-box button { background: var(--navy); color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <img src="logo.png" alt="Stark in Action Logo" class="hero-logo">
+  <h1 class="hero-title" style="font-size:32px;">Admin</h1>
+</header>
+
+<main class="admin-wrap">
+
+  <section class="card" id="login-box">
+    <h2>Login</h2>
+    <input type="password" id="password-input" placeholder="Passwort">
+    <button id="login-btn" type="button">Anmelden</button>
+    <p id="login-error" class="form-status error"></p>
+  </section>
+
+  <section class="card hidden" id="admin-panel">
+    <h2>Einreichungen</h2>
+    <div class="admin-toolbar">
+      <label for="filter-select" class="muted">Filter:</label>
+      <select id="filter-select">
+        <option value="all">Alle</option>
+        <option value="pending" selected>Nur offene (pending)</option>
+        <option value="approved">Nur freigegeben</option>
+        <option value="rejected">Nur abgelehnt</option>
+      </select>
+      <button id="refresh-btn" type="button" class="freebie-btn" style="background:var(--navy); padding:8px 16px; font-size:13px;">Aktualisieren</button>
+      <span id="count-label" class="muted"></span>
+    </div>
+    <div id="rows"></div>
+  </section>
+
+</main>
+
+<script>
+const loginBox = document.getElementById('login-box');
+const adminPanel = document.getElementById('admin-panel');
+const passwordInput = document.getElementById('password-input');
+const loginBtn = document.getElementById('login-btn');
+const loginError = document.getElementById('login-error');
+const rowsEl = document.getElementById('rows');
+const filterSelect = document.getElementById('filter-select');
+const refreshBtn = document.getElementById('refresh-btn');
+const countLabel = document.getElementById('count-label');
+
+let password = sessionStorage.getItem('zdm_admin_pw') || '';
+let allData = [];
+
+async function callAdmin(action, extra) {
+  const res = await fetch('/.netlify/functions/admin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password, action, ...extra })
+  });
+  if (res.status === 401) throw new Error('unauthorized');
+  if (!res.ok) throw new Error('Serverfehler (' + res.status + ')');
+  return res.json();
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : str;
+  return div.innerHTML;
+}
+
+function render() {
+  const filter = filterSelect.value;
+  const filtered = filter === 'all' ? allData : allData.filter(r => r.status === filter);
+  countLabel.textContent = `${filtered.length} Einträge`;
+  rowsEl.innerHTML = filtered.map(row => `
+    <div class="admin-row" data-id="${row.id}">
+      <img class="admin-thumb" src="${escapeHtml(row.image_path)}" alt="">
+      <div class="admin-info">
+        <div class="name">${escapeHtml(row.child_name)}, ${row.child_age} Jahre
+          <span class="admin-badge ${row.status}">${row.status}</span>
+          ${row.wants_freebie ? '<span class="admin-badge approved">Freebie gewünscht</span>' : ''}
+        </div>
+        <div class="meta">${new Date(row.created_at).toLocaleString('de-DE')} · ${escapeHtml(row.parent_email)}</div>
+        <div class="story">${escapeHtml(row.story)}</div>
+        <div class="admin-actions">
+          <button class="btn-approve" data-action="approved">Freigeben</button>
+          <button class="btn-pending" data-action="pending">Zurück auf offen</button>
+          <button class="btn-reject" data-action="rejected">Ablehnen</button>
+          <button class="btn-delete" data-action="delete">Löschen</button>
+        </div>
+      </div>
+    </div>
+  `).join('') || '<p class="muted">Keine Einträge in diesem Filter.</p>';
+}
+
+rowsEl.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const row = btn.closest('.admin-row');
+  const id = row.dataset.id;
+  const action = btn.dataset.action;
+  btn.disabled = true;
+  try {
+    if (action === 'delete') {
+      if (!confirm('Diesen Eintrag wirklich endgültig löschen?')) { btn.disabled = false; return; }
+      await callAdmin('delete', { id });
+      allData = allData.filter(r => r.id !== id);
+    } else {
+      await callAdmin('set_status', { id, status: action });
+      const entry = allData.find(r => r.id === id);
+      if (entry) entry.status = action;
+    }
+    render();
+  } catch (err) {
+    alert('Fehler: ' + err.message);
+    btn.disabled = false;
+  }
+});
+
+filterSelect.addEventListener('change', render);
+refreshBtn.addEventListener('click', loadData);
+
+async function loadData() {
+  rowsEl.innerHTML = '<p class="muted">Lädt …</p>';
+  try {
+    allData = await callAdmin('list');
+    render();
+  } catch (err) {
+    if (err.message === 'unauthorized') {
+      showLogin('Sitzung abgelaufen, bitte erneut anmelden.');
+    } else {
+      rowsEl.innerHTML = '<p class="form-status error">Fehler beim Laden: ' + escapeHtml(err.message) + '</p>';
+    }
+  }
+}
+
+function showLogin(errorMsg) {
+  sessionStorage.removeItem('zdm_admin_pw');
+  adminPanel.classList.add('hidden');
+  loginBox.classList.remove('hidden');
+  loginError.textContent = errorMsg || '';
+}
+
+loginBtn.addEventListener('click', async () => {
+  password = passwordInput.value;
+  loginError.textContent = '';
+  try {
+    allData = await callAdmin('list');
+    sessionStorage.setItem('zdm_admin_pw', password);
+    loginBox.classList.add('hidden');
+    adminPanel.classList.remove('hidden');
+    render();
+  } catch (err) {
+    loginError.textContent = err.message === 'unauthorized' ? 'Falsches Passwort.' : 'Fehler: ' + err.message;
+  }
+});
+passwordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginBtn.click(); });
+
+// Automatisch einloggen, falls Passwort schon in dieser Browser-Sitzung gespeichert ist
+if (password) {
+  loginBox.classList.add('hidden');
+  adminPanel.classList.remove('hidden');
+  loadData();
+}
+</script>
+
+</body>
+</html>

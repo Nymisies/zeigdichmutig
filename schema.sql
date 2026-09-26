@@ -68,3 +68,34 @@ create table if not exists keepalive_ping (
   id bigint generated always as identity primary key,
   pinged_at timestamptz not null default now()
 );
+
+-- ============================================================
+-- GALERIE + ABSTIMMUNG (26.09.)
+-- ============================================================
+
+-- Öffentliche, datenschutzsichere Sicht auf freigegebene Einsendungen:
+-- NUR status='approved', NIEMALS parent_email oder die anderen Rohdaten.
+-- Claas gibt einzelne Einsendungen frei, indem er im Supabase Table Editor
+-- bei der jeweiligen Zeile status auf 'approved' setzt.
+create or replace view public_submissions as
+select id, child_name, child_age, story, image_path, votes, created_at
+from submissions
+where status = 'approved';
+
+grant select on public_submissions to anon;
+
+-- Abstimmen per RPC statt direktem UPDATE-Recht für anon — schmalere,
+-- gezieltere Berechtigung: erhöht nur den Zähler einer freigegebenen
+-- Einsendung um 1, sonst nichts. security definer umgeht RLS gezielt
+-- nur für genau diesen einen Zweck.
+create or replace function cast_vote(p_id uuid)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update submissions set votes = votes + 1
+  where id = p_id and status = 'approved';
+$$;
+
+grant execute on function cast_vote(uuid) to anon;

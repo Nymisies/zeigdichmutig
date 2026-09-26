@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galerie – Zeig dich Mutig</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="hero">
+  <img src="logo.png" alt="Stark in Action Logo" class="hero-logo">
+  <h1 class="hero-title"><span class="ink">Zeig dich</span> <span class="accent">Mutig</span></h1>
+  <p class="hero-banner">Die eingereichten Mut-Geschichten</p>
+</header>
+
+<main>
+
+  <section class="card">
+    <h2>Galerie</h2>
+    <p id="gallery-intro" class="muted">Lädt …</p>
+  </section>
+
+  <section id="gallery-grid" class="gallery-grid"></section>
+
+  <section class="card hidden" id="empty-state">
+    <p class="muted">Noch keine freigegebenen Einsendungen – schau bald wieder vorbei!</p>
+  </section>
+
+  <section class="card" style="text-align:center;">
+    <p>Hast du noch keine Geschichte eingereicht?</p>
+    <a href="index.html#form-section" class="freebie-btn" style="display:inline-block;">Jetzt mitmachen</a>
+  </section>
+
+</main>
+
+<footer>
+  <img src="logo.png" alt="Stark in Action Logo" class="footer-logo">
+  <p>Stark in Action · <a href="https://www.stark-in-action.de">www.stark-in-action.de</a></p>
+  <p><a href="index.html">Zur Startseite</a> · <a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutzerklärung</a></p>
+</footer>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script type="module" src="galerie.js"></script>
+</body>
+</html>
