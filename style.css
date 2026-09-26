@@ -273,7 +273,7 @@ ol li { margin-bottom: 8px; }
   display: flex;
   align-items: center;
   justify-content: center;
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
   padding: 0 8px;
   touch-action: pan-y;
@@ -298,17 +298,17 @@ ol li { margin-bottom: 8px; }
 .spot-main { display: flex; flex-direction: column; gap: 14px; flex: 1 1 auto; max-width: 600px; margin: 0 10px; min-width: 0; }
 .spot-photo-wrap {
   display: flex; align-items: center; justify-content: center;
-  background: var(--bg); border-radius: 14px; overflow: hidden; max-height: 300px;
+  background: var(--bg); border-radius: 14px; overflow: hidden; max-height: 520px;
 }
-.spot-photo { max-width: 100%; max-height: 300px; display: block; object-fit: contain; }
+.spot-photo { max-width: 100%; max-height: 520px; display: block; object-fit: contain; }
 .spot-story { font-size: 14px; max-height: 110px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 10px; padding-right: 4px; }
 .spot-vote { margin-top: 4px; }
 
 @media (min-width: 700px) {
   .spot-peek { width: 90px; height: 220px; }
-  .spot-photo-wrap { max-height: 420px; }
-  .spot-photo { max-height: 420px; }
-  .spot-main { flex-direction: row; align-items: center; max-width: 900px; gap: 28px; }
+  .spot-photo-wrap { max-height: 740px; }
+  .spot-photo { max-height: 740px; }
+  .spot-main { flex-direction: row; align-items: center; max-width: 1300px; gap: 28px; }
   .spot-photo-wrap { flex: 1 1 55%; }
   .spot-text { flex: 1 1 45%; min-width: 0; }
   .spot-story { max-height: 260px; font-size: 15px; }
