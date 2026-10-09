@@ -5,6 +5,12 @@
 // Einreichung (die steht schon vorher sicher in der Datenbank).
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+// Absender: Solange bei Resend keine eigene Domain verifiziert ist, liefert nur
+// "onboarding@resend.dev" und das AUSSCHLIESSLICH an die Adresse des Resend-Kontos
+// (an Eltern scheitert es mit 403). Sobald die Domain verifiziert ist, in Netlify
+// die Umgebungsvariable MAIL_FROM setzen, z.B. "Stark in Action <hallo@mail.stark-in-action.de>".
+const MAIL_FROM = process.env.MAIL_FROM || 'Stark in Action <onboarding@resend.dev>';
+const REPLY_TO = process.env.MAIL_REPLY_TO || 'claas.altenhr@freenet.de';
 const SITE_URL = 'https://zeigdichmutig.netlify.app';
 const FREEBIE_URL = 'https://stark-in-action.thrivecart.com/kleine-helden/';
 
@@ -48,7 +54,8 @@ exports.handler = async (event) => {
       method: 'POST',
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'Stark in Action <onboarding@resend.dev>',
+        from: MAIL_FROM,
+        reply_to: [REPLY_TO],
         to: [parent_email],
         subject: 'Danke für deine Teilnahme bei "Zeig dich Mutig"',
         text,

@@ -129,16 +129,43 @@ const form = document.getElementById('submission-form');
 const submitBtn = document.getElementById('submit-btn');
 const statusEl = document.getElementById('form-status');
 const freebieReveal = document.getElementById('freebie-reveal');
+const nextSteps = document.getElementById('next-steps');
+const shareBtn = document.getElementById('share-btn');
+const shareFeedback = document.getElementById('share-feedback');
 
 function setStatus(message, type) {
   statusEl.textContent = message;
   statusEl.className = 'form-status' + (type ? ' ' + type : '');
 }
 
+// "Seite teilen": auf dem Handy öffnet sich das Teilen-Menü, sonst wird der Link kopiert.
+shareBtn.addEventListener('click', async () => {
+  const shareUrl = location.origin + '/';
+  const shareData = {
+    title: 'Zeig dich Mutig',
+    text: 'Mach mit bei "Zeig dich Mutig": Foto und Geschichte vom Mut deines Kindes einreichen.',
+    url: shareUrl
+  };
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      return;
+    }
+    await navigator.clipboard.writeText(shareUrl);
+    shareFeedback.textContent = 'Link kopiert – jetzt kannst du ihn verschicken.';
+  } catch (err) {
+    // Abbruch im Teilen-Menü ist normal; nur wenn auch Kopieren scheitert, Link anzeigen.
+    if (err && err.name === 'AbortError') return;
+    shareFeedback.textContent = 'Link zum Weitergeben: ' + shareUrl;
+  }
+});
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   setStatus('', '');
   freebieReveal.classList.add('hidden');
+  nextSteps.classList.add('hidden');
+  shareFeedback.textContent = '';
 
   const childName = document.getElementById('child_name').value.trim();
   const childAge = parseInt(document.getElementById('child_age').value, 10);
@@ -214,6 +241,7 @@ form.addEventListener('submit', async (e) => {
     if (wantsFreebie) {
       freebieReveal.classList.remove('hidden');
     }
+    nextSteps.classList.remove('hidden');
 
     // Bestätigungsmail an die Eltern — geht IMMER raus (nicht nur bei Freebie-Wunsch),
     // mit Hinweis auf die Abstimmung ab 1. November + Teilen-Aufruf.
