@@ -1,34 +1,56 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { compressImage } from './image-utils.js';
 
 const MAX_RAW_PHOTO_BYTES = 25 * 1024 * 1024; // Sanity-Limit fürs Original vor der Komprimierung
-const COMPRESS_MAX_DIMENSION = 2200; // px, längere Seite — für die Web-Ansicht/Abstimmung, nicht für Druck
-const COMPRESS_TARGET_BYTES = 2 * 1024 * 1024; // Zielgröße nach Komprimierung
 
-// Verkleinert & komprimiert ein Bild im Browser, bevor es hochgeladen wird —
-// aus einem 6-8 MB Handyfoto werden so realistisch 300-600 KB. Zusätzlich gibt
-// es ein serverseitiges Hard-Limit auf dem Storage-Bucket (siehe schema.sql),
-// das unabhängig davon greift, falls diese Client-Logik umgangen wird.
-async function compressImage(file) {
-  const bitmap = await createImageBitmap(file);
-  let { width, height } = bitmap;
-  if (width > COMPRESS_MAX_DIMENSION || height > COMPRESS_MAX_DIMENSION) {
-    const scale = COMPRESS_MAX_DIMENSION / Math.max(width, height);
-    width = Math.round(width * scale);
-    height = Math.round(height * scale);
+// Stiller technischer Fehlerbericht (ohne Namen/Mail/Geschichte) in die Tabelle
+// "client_errors". Bewusst per einfachem fetch statt über die Supabase-Bibliothek,
+// damit er auch dann funktioniert, wenn genau diese Bibliothek nicht geladen wurde.
+// Schlägt der Bericht selbst fehl, passiert nichts — er darf nie etwas kaputt machen.
+const reportedSteps = new Set();
+function reportClientError(step, err, file) {
+  if (reportedSteps.has(step)) return;
+  reportedSteps.add(step);
+  try {
+    fetch(`${SUPABASE_URL}/rest/v1/client_errors`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify({
+        step,
+        message: String((err && (err.message || err.code)) || err).slice(0, 400),
+        user_agent: navigator.userAgent.slice(0, 280),
+        file_type: file ? (file.type || null) : null,
+        file_size: file ? file.size : null,
+        page: location.pathname.slice(0, 190)
+      }),
+      keepalive: true
+    }).catch(() => {});
+  } catch { /* ignorieren */ }
+}
+
+// Konkrete, hilfreiche Meldung je nachdem, in welchem Schritt es gehakt hat.
+function messageForFailure(step, err) {
+  if (step === 'init') {
+    return 'Die Seite konnte nicht vollständig geladen werden. Bitte lade sie neu. Falls das nicht hilft: Werbeblocker, Kindersicherung oder privates DNS für diese Seite ausschalten oder einen anderen Browser nutzen. (Fehlercode: init)';
   }
-
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
-
-  let quality = 0.85;
-  let blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
-  while (blob && blob.size > COMPRESS_TARGET_BYTES && quality > 0.65) {
-    quality -= 0.08;
-    blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+  if (step === 'compress') {
+    if (err && err.code === 'canvas') {
+      return 'Dein Foto ist für dieses Gerät zu groß zum Verkleinern. Bitte wähle ein kleineres Foto oder verkleinere es vorher. (Fehlercode: canvas)';
+    }
+    return 'Dein Foto konnte nicht verarbeitet werden. Bitte wähle ein anderes Foto im JPG- oder PNG-Format (oder mach einen Screenshot vom Foto). (Fehlercode: foto)';
   }
-  return blob || file;
+  if (step === 'upload') {
+    return 'Das Foto konnte nicht hochgeladen werden. Bitte prüfe deine Internetverbindung (am besten WLAN) und versuch es noch einmal. (Fehlercode: upload)';
+  }
+  if (step === 'insert') {
+    return 'Deine Geschichte konnte nicht gespeichert werden. Bitte versuch es in ein paar Minuten noch einmal. Wenn es weiter nicht klappt, schreib uns kurz an claas.altenhr@freenet.de. (Fehlercode: speichern)';
+  }
+  return 'Da ist etwas schiefgelaufen. Bitte versuch es später noch einmal.';
 }
 
 // Lädt das unkomprimierte Original in den privaten "originals"-Bucket hoch und
@@ -63,6 +85,9 @@ async function archiveOriginal(originalFile, baseFileName, meta) {
 let supabase = null;
 function getSupabase() {
   if (!supabase) {
+    if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+      throw new Error('Supabase-Bibliothek nicht geladen');
+    }
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
   return supabase;
@@ -149,11 +174,17 @@ form.addEventListener('submit', async (e) => {
   submitBtn.disabled = true;
   setStatus('Foto wird verkleinert …', '');
 
+  // Merkt sich, in welchem Schritt es zuletzt war — für eine konkrete Fehlermeldung.
+  let step = 'init';
+
   try {
     const supabase = getSupabase();
+
+    step = 'compress';
     const compressed = await compressImage(file);
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
 
+    step = 'upload';
     setStatus('Wird hochgeladen …', '');
     const { error: uploadError } = await supabase.storage
       .from('photos')
@@ -163,6 +194,7 @@ form.addEventListener('submit', async (e) => {
 
     const { data: publicUrlData } = supabase.storage.from('photos').getPublicUrl(fileName);
 
+    step = 'insert';
     const { error: insertError } = await supabase.from('submissions').insert({
       child_name: childName,
       child_age: childAge,
@@ -195,8 +227,9 @@ form.addEventListener('submit', async (e) => {
     // erfolgreiche Einreichung oben nicht — die steht schon sicher in der DB).
     archiveOriginal(file, fileName, { childName, childAge, story, parentEmail });
   } catch (err) {
-    console.error(err);
-    setStatus('Da ist etwas schiefgelaufen. Bitte versuch es später noch einmal.', 'error');
+    console.error(`Einreichung fehlgeschlagen im Schritt "${step}":`, err);
+    reportClientError(step, err, file);
+    setStatus(messageForFailure(step, err), 'error');
   } finally {
     submitBtn.disabled = false;
   }

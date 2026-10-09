@@ -99,3 +99,28 @@ as $$
 $$;
 
 grant execute on function cast_vote(uuid) to anon;
+
+-- ============================================================
+-- FEHLERPROTOKOLL (09.10.): technische Fehlerberichte aus dem Formular
+-- ============================================================
+-- Wenn das Absenden bei jemandem scheitert, schickt die Seite still einen
+-- technischen Bericht (Schritt, Fehlertext, Browser, Foto-Typ/-Größe) hierher —
+-- ohne Namen, Mail-Adresse oder Geschichte. So sehen wir beim nächsten Mal sofort,
+-- woran es lag. anon darf nur schreiben (insert), nicht lesen.
+create table if not exists client_errors (
+  id bigint generated always as identity primary key,
+  step text not null check (char_length(step) <= 40),
+  message text check (char_length(message) <= 500),
+  user_agent text check (char_length(user_agent) <= 300),
+  file_type text check (char_length(file_type) <= 60),
+  file_size bigint,
+  page text check (char_length(page) <= 200),
+  created_at timestamptz not null default now()
+);
+
+alter table client_errors enable row level security;
+
+create policy "Fehlerberichte einreichen"
+  on client_errors for insert
+  to anon
+  with check (true);
