@@ -10,6 +10,10 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || 'claas.altenhr@freenet.de';
+// Gleicher Absender wie bei den Mails an die Eltern: sobald bei Resend eine eigene
+// Domain verifiziert ist, MAIL_FROM in Netlify setzen. Der Test-Absender
+// onboarding@resend.dev wird von manchen Providern (z.B. freenet) abgewiesen.
+const MAIL_FROM = process.env.MAIL_FROM || 'Zeig dich Mutig <onboarding@resend.dev>';
 
 function slugify(name) {
   return (name || 'Kind')
@@ -92,7 +96,7 @@ exports.handler = async (event) => {
         method: 'POST',
         headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: 'Zeig dich Mutig <onboarding@resend.dev>',
+          from: MAIL_FROM,
           to: [NOTIFY_EMAIL],
           subject: `#${runningNumber} Neue Einreichung: ${child_name} (${child_age} Jahre)`,
           text: `#${runningNumber} — ${child_name}, ${child_age} Jahre\n\n${story}\n\nKontakt der Eltern: ${parent_email}\n\nDas Originalfoto in Druckqualität ist angehängt (${fileName}).`,
