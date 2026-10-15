@@ -42,7 +42,7 @@ create policy "Öffentlicher Foto-Upload"
   to anon
   with check (bucket_id = 'photos');
 
--- Privater Bucket "originals": Zwischenlager für die unkomprimierten
+-- Privater Bucket "originals": Archiv (bleibt bis zur manuellen Löschung nach der Buchproduktion) für die unkomprimierten
 -- Originalfotos (Druckqualität fürs Buch). NICHT public. Nur "insert" für
 -- anon (Upload beim Absenden), kein "select" — nur die Netlify-Funktion
 -- mit dem service_role Key kann sie lesen und nach dem Mailversand wieder

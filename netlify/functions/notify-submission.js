@@ -1,8 +1,9 @@
 // Läuft im Hintergrund nach jeder Einreichung: holt das Original-Foto aus dem
-// privaten "originals"-Bucket (per service_role Key, umgeht RLS), schickt es
-// per Resend als E-Mail an Claas (Dateiname: laufende Nummer_Name_Alter) und löscht
-// es danach wieder aus Supabase — aber NUR, wenn die Mail wirklich verschickt wurde.
-// Scheitert der Versand, bleibt das Original erhalten (nicht verlieren!).
+// privaten "originals"-Bucket (per service_role Key, umgeht RLS) und schickt es
+// per Resend als E-Mail an Claas (Dateiname: laufende Nummer_Name_Alter).
+// Das Original wird NIE automatisch gelöscht: Es bleibt im privaten Bucket liegen,
+// weil eine Mail auch nach erfolgreichem API-Aufruf noch Stunden später
+// zurückgewiesen werden kann (Bounce). Gelöscht wird von Hand nach der Buchproduktion.
 // Schlägt dieser Hintergrund-Schritt fehl, bleibt die eigentliche Einreichung
 // trotzdem gültig (steht schon in der Datenbank, bevor diese Funktion läuft).
 
@@ -64,24 +65,12 @@ exports.handler = async (event) => {
     return { statusCode: 200, body: 'skipped (missing env)' };
   }
 
-  let deleted = false;
-  const deleteOriginalOnce = async () => {
-    if (deleted) return;
-    deleted = true;
-    await fetch(`${SUPABASE_URL}/storage/v1/object/originals/${path}`, {
-      method: 'DELETE',
-      headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}` }
-    }).catch(err => console.error('Original-Löschung fehlgeschlagen:', err));
-  };
-
-  let downloadedOk = false;
   try {
     // 1) Original aus dem privaten Bucket laden
     const downloadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/originals/${path}`, {
       headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}` }
     });
     if (!downloadRes.ok) throw new Error(`Download fehlgeschlagen: ${downloadRes.status}`);
-    downloadedOk = true;
     const arrayBuffer = await downloadRes.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString('base64');
     const ext = path.split('.').pop().toLowerCase();
@@ -89,33 +78,23 @@ exports.handler = async (event) => {
     const runningNumber = await getRunningNumber();
     const fileName = `${String(runningNumber).padStart(3, '0')}_${slugify(child_name)}_${child_age}.${ext}`;
 
-    let mailOk = false;
-    try {
-      // 2) Per Resend an Claas mailen
-      const emailRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: MAIL_FROM,
-          to: [NOTIFY_EMAIL],
-          subject: `#${runningNumber} Neue Einreichung: ${child_name} (${child_age} Jahre)`,
-          text: `#${runningNumber} — ${child_name}, ${child_age} Jahre\n\n${story}\n\nKontakt der Eltern: ${parent_email}\n\nDas Originalfoto in Druckqualität ist angehängt (${fileName}).`,
-          attachments: [{ filename: fileName, content: base64 }]
-        })
-      });
-      if (!emailRes.ok) throw new Error(`Resend-Fehler: ${emailRes.status} ${await emailRes.text()}`);
-      mailOk = true;
-    } finally {
-      // Original nur löschen, wenn die Mail wirklich raus ist. Scheitert der Versand,
-      // bleibt es im privaten "originals"-Bucket liegen, damit es nicht verloren geht
-      // und später (z.B. von Hand) nachgeschickt werden kann.
-      if (mailOk) await deleteOriginalOnce();
-      else console.error(`Original bleibt erhalten (Mail fehlgeschlagen): ${path}`);
-    }
+    // 2) Per Resend an Claas mailen
+    const emailRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: MAIL_FROM,
+        to: [NOTIFY_EMAIL],
+        subject: `#${runningNumber} Neue Einreichung: ${child_name} (${child_age} Jahre)`,
+        text: `#${runningNumber} — ${child_name}, ${child_age} Jahre\n\n${story}\n\nKontakt der Eltern: ${parent_email}\n\nDas Originalfoto in Druckqualität ist angehängt (${fileName}).`,
+        attachments: [{ filename: fileName, content: base64 }]
+      })
+    });
+    if (!emailRes.ok) throw new Error(`Resend-Fehler: ${emailRes.status} ${await emailRes.text()}`);
 
     return { statusCode: 200, body: 'ok' };
   } catch (err) {
-    console.error('notify-submission Fehler:', err);
+    console.error('notify-submission Fehler (Original bleibt im Bucket erhalten):', err);
     // Auch im Fehlerfall 200: der Haupt-Datensatz ist unabhängig davon längst gespeichert.
     return { statusCode: 200, body: 'error logged' };
   }
