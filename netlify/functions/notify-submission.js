@@ -1,8 +1,8 @@
 // Läuft im Hintergrund nach jeder Einreichung: holt das Original-Foto aus dem
 // privaten "originals"-Bucket (per service_role Key, umgeht RLS), schickt es
-// per Resend als E-Mail an Claas (Dateiname: laufende Nummer_Name_Alter), löscht
-// es danach IMMER wieder aus Supabase — auch wenn der Mailversand fehlschlägt,
-// damit sich dort niemals Originaldateien ansammeln.
+// per Resend als E-Mail an Claas (Dateiname: laufende Nummer_Name_Alter) und löscht
+// es danach wieder aus Supabase — aber NUR, wenn die Mail wirklich verschickt wurde.
+// Scheitert der Versand, bleibt das Original erhalten (nicht verlieren!).
 // Schlägt dieser Hintergrund-Schritt fehl, bleibt die eigentliche Einreichung
 // trotzdem gültig (steht schon in der Datenbank, bevor diese Funktion läuft).
 
@@ -85,6 +85,7 @@ exports.handler = async (event) => {
     const runningNumber = await getRunningNumber();
     const fileName = `${String(runningNumber).padStart(3, '0')}_${slugify(child_name)}_${child_age}.${ext}`;
 
+    let mailOk = false;
     try {
       // 2) Per Resend an Claas mailen
       const emailRes = await fetch('https://api.resend.com/emails', {
@@ -99,17 +100,18 @@ exports.handler = async (event) => {
         })
       });
       if (!emailRes.ok) throw new Error(`Resend-Fehler: ${emailRes.status} ${await emailRes.text()}`);
+      mailOk = true;
     } finally {
-      // Original IMMER löschen, sobald wir es heruntergeladen haben — unabhängig
-      // davon, ob der Mailversand geklappt hat. Sonst sammeln sich bei einzelnen
-      // Resend-Ausfällen dauerhaft Originaldateien im Speicher an.
-      await deleteOriginalOnce();
+      // Original nur löschen, wenn die Mail wirklich raus ist. Scheitert der Versand,
+      // bleibt es im privaten "originals"-Bucket liegen, damit es nicht verloren geht
+      // und später (z.B. von Hand) nachgeschickt werden kann.
+      if (mailOk) await deleteOriginalOnce();
+      else console.error(`Original bleibt erhalten (Mail fehlgeschlagen): ${path}`);
     }
 
     return { statusCode: 200, body: 'ok' };
   } catch (err) {
     console.error('notify-submission Fehler:', err);
-    if (downloadedOk) await deleteOriginalOnce();
     // Auch im Fehlerfall 200: der Haupt-Datensatz ist unabhängig davon längst gespeichert.
     return { statusCode: 200, body: 'error logged' };
   }
