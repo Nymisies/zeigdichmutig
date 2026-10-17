@@ -1,3 +1,6 @@
 # Alte Netlify-Adresse dauerhaft auf die eigene Domain umleiten (damit es nur EINE Adresse gibt,
 # z.B. fuer die Abstimmung per localStorage und fuer gemeinsame Links).
 https://zeigdichmutig.netlify.app/*  https://zeigdichmutig.stark-in-action.de/:splat  301!
+
+# Kurzer, eigener Link fuer den Dankeschoen-Kurs (in der Bestaetigungsmail), damit der Link zur Absender-Domain passt.
+/kleine-helden  https://stark-in-action.thrivecart.com/kleine-helden/  302

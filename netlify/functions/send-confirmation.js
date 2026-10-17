@@ -12,7 +12,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const MAIL_FROM = process.env.MAIL_FROM || 'Stark in Action <onboarding@resend.dev>';
 const REPLY_TO = process.env.MAIL_REPLY_TO || 'claas.altenhr@freenet.de';
 const SITE_URL = 'https://zeigdichmutig.stark-in-action.de';
-const FREEBIE_URL = 'https://stark-in-action.thrivecart.com/kleine-helden/';
+const FREEBIE_URL = 'https://zeigdichmutig.stark-in-action.de/kleine-helden'; // leitet per _redirects zu ThriveCart
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -69,3 +69,4 @@ exports.handler = async (event) => {
     return { statusCode: 200, body: 'error logged' };
   }
 };
+
