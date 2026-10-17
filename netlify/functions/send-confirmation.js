@@ -11,7 +11,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 // die Umgebungsvariable MAIL_FROM setzen, z.B. "Stark in Action <hallo@mail.stark-in-action.de>".
 const MAIL_FROM = process.env.MAIL_FROM || 'Stark in Action <onboarding@resend.dev>';
 const REPLY_TO = process.env.MAIL_REPLY_TO || 'claas.altenhr@freenet.de';
-const SITE_URL = 'https://zeigdichmutig.netlify.app';
+const SITE_URL = 'https://zeigdichmutig.stark-in-action.de';
 const FREEBIE_URL = 'https://stark-in-action.thrivecart.com/kleine-helden/';
 
 exports.handler = async (event) => {

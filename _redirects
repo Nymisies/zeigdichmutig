@@ -1,0 +1,3 @@
+# Alte Netlify-Adresse dauerhaft auf die eigene Domain umleiten (damit es nur EINE Adresse gibt,
+# z.B. fuer die Abstimmung per localStorage und fuer gemeinsame Links).
+https://zeigdichmutig.netlify.app/*  https://zeigdichmutig.stark-in-action.de/:splat  301!
