@@ -2,6 +2,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 import { compressImage } from './image-utils.js';
 
 const MAX_RAW_PHOTO_BYTES = 25 * 1024 * 1024; // Sanity-Limit fürs Original vor der Komprimierung
+const ARCHIVE_WAIT_MS = 30000; // so lange wartet das Formular maximal auf den Original-Upload
 
 // Stiller technischer Fehlerbericht (ohne Namen/Mail/Geschichte) in die Tabelle
 // "client_errors". Bewusst per einfachem fetch statt über die Supabase-Bibliothek,
@@ -22,7 +23,7 @@ function reportClientError(step, err, file) {
       },
       body: JSON.stringify({
         step,
-        message: String((err && (err.message || err.code)) || err).slice(0, 400),
+        message: ((err && (err.message || err.code)) ? String(err.message || err.code) + (err.cause && err.cause.name ? ` (${err.cause.name})` : '') : String(err)).slice(0, 400),
         user_agent: navigator.userAgent.slice(0, 280),
         file_type: file ? (file.type || null) : null,
         file_size: file ? file.size : null,
@@ -39,6 +40,9 @@ function messageForFailure(step, err) {
     return 'Die Seite konnte nicht vollständig geladen werden. Bitte lade sie neu. Falls das nicht hilft: Werbeblocker, Kindersicherung oder privates DNS für diese Seite ausschalten oder einen anderen Browser nutzen. (Fehlercode: init)';
   }
   if (step === 'compress') {
+    if (err && err.code === 'read') {
+      return 'Dein Foto konnte nicht vom Gerät gelesen werden. Vermutlich liegt es noch in der Cloud (z. B. Google Fotos). Bitte lade das Foto zuerst auf dein Handy herunter oder mach einen Screenshot davon und wähle diesen aus. (Fehlercode: lesen)';
+    }
     if (err && err.code === 'canvas') {
       return 'Dein Foto ist für dieses Gerät zu groß zum Verkleinern. Bitte wähle ein kleineres Foto oder verkleinere es vorher. (Fehlercode: canvas)';
     }
@@ -66,7 +70,9 @@ async function archiveOriginal(originalFile, baseFileName, meta) {
       .upload(originalPath, originalFile, { cacheControl: '3600', upsert: false });
     if (origUploadError) throw origUploadError;
 
-    await fetch('/.netlify/functions/notify-submission', {
+    // Die Benachrichtigungsmail an Claas läuft im Hintergrund weiter (kein await):
+    // Das Original liegt jetzt sicher im privaten Bucket, die Mail ist nur ein Extra.
+    fetch('/.netlify/functions/notify-submission', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -75,8 +81,9 @@ async function archiveOriginal(originalFile, baseFileName, meta) {
         child_age: meta.childAge,
         story: meta.story,
         parent_email: meta.parentEmail
-      })
-    });
+      }),
+      keepalive: true
+    }).catch(err => console.error('Benachrichtigung fehlgeschlagen:', err));
   } catch (err) {
     console.error('Original-Archivierung fehlgeschlagen (Einreichung selbst ist trotzdem gültig):', err);
   }
@@ -234,6 +241,16 @@ form.addEventListener('submit', async (e) => {
 
     if (insertError) throw insertError;
 
+    // Einreichung steht sicher in der DB. Jetzt noch das Original in Druckqualität sichern
+    // und darauf WARTEN (höchstens ARCHIVE_WAIT_MS): Wer die Seite direkt nach der
+    // Danke-Meldung schließt oder das Handy sperrt, würde den Upload sonst abbrechen.
+    // Ein Fehler oder Timeout hier macht die Einreichung nicht ungültig.
+    setStatus('Geschichte und Foto sind gespeichert. Dein Originalfoto in Druckqualität wird noch gesichert – bitte lass diese Seite kurz geöffnet …', '');
+    await Promise.race([
+      archiveOriginal(file, fileName, { childName, childAge, story, parentEmail }),
+      new Promise((resolve) => setTimeout(resolve, ARCHIVE_WAIT_MS))
+    ]);
+
     form.reset();
     preview.classList.add('hidden');
     setStatus('Danke! Deine Geschichte ist bei uns eingegangen.', 'success');
@@ -248,12 +265,9 @@ form.addEventListener('submit', async (e) => {
     fetch('/.netlify/functions/send-confirmation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ parent_email: parentEmail, child_name: childName, wants_freebie: wantsFreebie })
+      body: JSON.stringify({ parent_email: parentEmail, child_name: childName, wants_freebie: wantsFreebie }),
+      keepalive: true
     }).catch(err => console.error('Bestätigungsmail fehlgeschlagen:', err));
-
-    // Original in Druckqualität separat archivieren (best-effort, blockiert die
-    // erfolgreiche Einreichung oben nicht — die steht schon sicher in der DB).
-    archiveOriginal(file, fileName, { childName, childAge, story, parentEmail });
   } catch (err) {
     console.error(`Einreichung fehlgeschlagen im Schritt "${step}":`, err);
     reportClientError(step, err, file);

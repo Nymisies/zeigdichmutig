@@ -16,17 +16,40 @@ function fail(code, cause) {
 
 // Erst createImageBitmap (schnell), bei Fehlschlag Rückfall über ein <img>-Element.
 // Manche Handys/Browser schaffen den einen Weg nicht, den anderen aber schon.
+function decodeViaImgElement(blob, firstError) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(fail('decode', firstError)); };
+    img.src = url;
+  });
+}
+
+// Reihenfolge: createImageBitmap -> <img> -> Datei komplett in den Speicher lesen und beides
+// nochmal versuchen. Der letzte Schritt hilft bei Handy-Dateien, die zwar ausgewählt, aber
+// nicht wirklich lesbar sind (z.B. noch in der Cloud): Dann kommt der Code 'read'.
 async function decodeImage(file) {
+  let firstError;
   try {
     return await createImageBitmap(file);
-  } catch (firstError) {
-    return await new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(fail('decode', firstError)); };
-      img.src = url;
-    });
+  } catch (e) {
+    firstError = e;
+  }
+  try {
+    return await decodeViaImgElement(file, firstError);
+  } catch { /* weiter mit Schritt 3 */ }
+
+  let copy;
+  try {
+    copy = new Blob([await file.arrayBuffer()], { type: file.type || 'image/jpeg' });
+  } catch (readError) {
+    throw fail('read', readError);
+  }
+  try {
+    return await createImageBitmap(copy);
+  } catch {
+    return await decodeViaImgElement(copy, firstError);
   }
 }
 
